@@ -1,0 +1,21 @@
+{
+  "name": "bullmq-docker-cancel",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start:producer": "tsx src/producer.ts",
+    "start:worker": "tsx src/worker.ts"
+  },
+  "dependencies": {
+    "bullmq": "^5.56.9",
+    "dockerode": "^4.0.7",
+    "dotenv": "^17.2.1"
+  },
+  "devDependencies": {
+    "@types/dockerode": "^3.3.42",
+    "tsx": "^4.20.3",
+    "typescript": "^5.9.2"
+  },
+  "packageManager": "pnpm@10.14.0"
+}

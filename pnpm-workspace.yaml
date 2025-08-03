@@ -1,0 +1,6 @@
+ignoredBuiltDependencies:
+  - cpu-features
+  - esbuild
+  - msgpackr-extract
+  - protobufjs
+  - ssh2
