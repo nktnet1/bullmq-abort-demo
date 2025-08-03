@@ -40,3 +40,8 @@ Tools:
    ```
 
 1. In the producer container, use the `start` command to create a job, and use `stop <job>` to abort it
+
+## Context
+
+See Dokploy issue 360
+- https://github.com/Dokploy/dokploy/issues/360#issuecomment-3148772194
