@@ -1,17 +1,19 @@
 # BULLMQ | Abort Worker Tasks Demo
 
-Project showcasing how active bullmq worker processes can be aborted midway.
+Project showcasing how active bullmq worker processes can be aborted midway using
+[Redis pub/sub](https://redis.io/docs/latest/develop/pubsub/).
 
-For more context, see:
-- https://github.com/Dokploy/dokploy/issues/360#issuecomment-3148772194
+This is a proof of concept. The pub/sub implementation can also be exchanged for
+alternatives such as [Redis streams](https://redis.io/docs/latest/develop/data-types/streams)
+or simple short polling.
 
-## Tools:
+## Tools
 
-- redis (bullmq, pubsub)
+- redis + bullmq
 - docker + docker compose
-- nodejs (pnpm)
+- nodejs + pnpm
 
-## Demo:
+## Video Demo
 
 [bullmq-abort-demo.webm](https://github.com/user-attachments/assets/f442730d-c71e-4f1e-a2fe-dc7b05a6cd86)
 
@@ -49,3 +51,11 @@ For more context, see:
    ```
 
 1. In the producer container, use the `start` command to create a job, and use `stop <job>` to abort it
+
+## Context
+
+Dokploy issue 360:
+- https://github.com/Dokploy/dokploy/issues/360#issuecomment-3148772194
+
+Bullmq issue 632:
+- https://github.com/taskforcesh/bullmq/issues/632
