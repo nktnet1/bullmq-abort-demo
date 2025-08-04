@@ -1,11 +1,20 @@
-# BULLMQ Abort Running Task Demo
+# BULLMQ | Abort Worker Tasks Demo
 
-Demo project for how to abort bullmq workers that run docker jobs.
+Project showcasing how active bullmq worker processes can be aborted midway.
 
-Tools:
+For more context, see:
+- https://github.com/Dokploy/dokploy/issues/360#issuecomment-3148772194
+
+## Tools:
+
 - redis (bullmq, pubsub)
 - docker + docker compose
 - nodejs (pnpm)
+
+## Demo:
+
+[bullmq-abort-demo.webm](https://github.com/user-attachments/assets/f442730d-c71e-4f1e-a2fe-dc7b05a6cd86)
+
 
 ## Instructions
 
@@ -40,8 +49,3 @@ Tools:
    ```
 
 1. In the producer container, use the `start` command to create a job, and use `stop <job>` to abort it
-
-## Context
-
-See Dokploy issue 360
-- https://github.com/Dokploy/dokploy/issues/360#issuecomment-3148772194
