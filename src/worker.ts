@@ -1,15 +1,12 @@
 import { Worker, Job } from "bullmq";
 import Docker, { Container } from "dockerode";
 import Redis from "ioredis";
-import * as dotenv from "dotenv";
+import { getChannelIdKey, QUEUE_NAME, REDIS_HOST } from './shared';
 
-dotenv.config();
-
-const redisHost = process.env.REDIS_HOST || "localhost";
 const docker = new Docker();
-const sub = new Redis({ host: redisHost });
+const sub = new Redis({ host: REDIS_HOST });
 
-async function pullImage(image: string): Promise<void> {
+const pullImage = (image: string): Promise<void> => {
   return new Promise((resolve, reject) => {
     docker.pull(image, {}, (err, stream) => {
       if (err) {
@@ -24,9 +21,9 @@ async function pullImage(image: string): Promise<void> {
       });
     });
   });
-}
+};
 
-async function startJobContainer(jobId: string): Promise<Container> {
+const startJobContainer = async (jobId: string): Promise<Container> => {
   console.log("Starting container for:", jobId);
   const image = "alpine:3.14";
 
@@ -56,10 +53,10 @@ async function startJobContainer(jobId: string): Promise<Container> {
 
   await container.start();
   return container;
-}
+};
 
-function createCancelWatcher(jobId: string): Promise<never> {
-  const channel = `cancel:${jobId}`;
+const createCancelWatcher = (jobId: string): Promise<never> => {
+  const channel = getChannelIdKey(jobId);
   return new Promise((_, reject) => {
     const handler = (msgChannel: string) => {
       if (msgChannel === channel) {
@@ -70,21 +67,26 @@ function createCancelWatcher(jobId: string): Promise<never> {
     sub.subscribe(channel).catch(reject);
     sub.on("message", handler);
   });
-}
+};
 
-async function cleanup(jobId: string, container?: Container) {
-  const channel = `cancel:${jobId}`;
-  try {
-    await sub.unsubscribe(channel);
-  } catch {}
+const finishOrKillJob = async  (jobId: string, container?: Container) => {
+  const channel = getChannelIdKey(jobId);
   if (container) {
     try {
       await container.kill();
-    } catch {}
+    } catch (error) {
+      console.error(`Error: failed to kill container with id ${container.id}`, error)
+    }
   }
-}
 
-async function handleJob(job: Job): Promise<{ status: string }> {
+  try {
+    await sub.unsubscribe(channel);
+  } catch (err) {
+    console.warn(`Failed to unsubscribe (jobId=${jobId}, containerId?=${container?.id})`, err);
+  }
+};
+
+const handleJob = async (job: Job) => {
   if (!job.id) {
     throw new Error("ERROR: missing job.id");
   }
@@ -98,16 +100,15 @@ async function handleJob(job: Job): Promise<{ status: string }> {
 
   try {
     await Promise.race([container.wait(), cancelWatcher]);
-    return { status: "completed" };
   } catch (err) {
     throw err;
   } finally {
-    await cleanup(job.id, container);
+    await finishOrKillJob(job.id, container);
   }
-}
+};
 
-const worker = new Worker("dockerQueue", handleJob, {
-  connection: { host: redisHost },
+const worker = new Worker(QUEUE_NAME, handleJob, {
+  connection: { host: REDIS_HOST },
 });
 
 worker.on("failed", (job, err) => {

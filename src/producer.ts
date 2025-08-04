@@ -1,18 +1,12 @@
-import { Queue, QueueEvents, Job } from "bullmq";
 import Redis from "ioredis";
+import { Queue, Job } from "bullmq";
 import readline from "readline";
-import * as dotenv from "dotenv";
+import { getChannelIdKey, QUEUE_NAME, REDIS_HOST } from './shared';
 
-dotenv.config();
+const redis = new Redis({ host: REDIS_HOST });
 
-const redisHost = process.env.REDIS_HOST || "localhost";
-const redis = new Redis({ host: redisHost });
-
-const queue = new Queue("dockerQueue", {
-  connection: { host: redisHost },
-});
-const queueEvents = new QueueEvents("dockerQueue", {
-  connection: { host: redisHost },
+const queue = new Queue(QUEUE_NAME, {
+  connection: { host: REDIS_HOST },
 });
 
 const rl = readline.createInterface({
@@ -20,33 +14,30 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
-function prompt(question: string): Promise<string> {
+const prompt = (question: string): Promise<string> => {
   return new Promise((resolve) => rl.question(question, resolve));
-}
+};
 
-async function addJob() {
-  const job: Job = await queue.add("sleepTask", {}, { removeOnComplete: true });
+const addJob = async () => {
+  const job: Job = await queue.add("sleepTask", {});
   console.log(`Added job ${job.id}`);
-}
+};
 
-async function listJobs() {
-  const jobs = await queue.getJobs(["waiting", "active", "completed", "failed", "delayed"]);
+const listJobs = async () => {
+  const jobs = await queue.getJobs();
   for (const job of jobs) {
     const state = await job.getState();
     console.log(`${job.id}: ${job.name} [${state}]`);
   }
-}
+};
 
-async function stopJob(jobId: string) {
-  const channel = `cancel:${jobId}`;
-  console.log(`Publishing cancel to ${channel}`);
-  await redis.publish(channel, "abort");
-}
+const stopJob = async (jobId: string) => {
+  console.log(`Publishing cancel for job ${jobId}`);
+  await redis.publish(getChannelIdKey(jobId), "abort");
+};
 
-async function main() {
+const main = async () => {
   console.log(`
-Welcome to Docker Job CLI!
-
 Commands:
   add           - Add a new job to the queue
   list          - List all jobs and their status
@@ -69,9 +60,9 @@ Commands:
         console.log("Please provide a job ID. Usage: stop <jobid>");
       }
     } else if (input === "exit") {
+      console.log('Exiting...');
       await redis.quit();
       await queue.close();
-      await queueEvents.close();
       rl.close();
       return;
     } else {
@@ -80,4 +71,6 @@ Commands:
   }
 }
 
-main();
+if (import.meta.url === `file://${process.argv[1]}`) {
+  void main().then(() => process.exit(0));
+}
