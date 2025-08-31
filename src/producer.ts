@@ -1,5 +1,5 @@
 import Redis from "ioredis";
-import { Queue, Job } from "bullmq";
+import { Job, Queue } from "bullmq";
 import readline from "readline";
 import { getChannelIdKey, QUEUE_NAME, REDIS_HOST } from './shared';
 
@@ -19,7 +19,7 @@ const prompt = (question: string): Promise<string> => {
 };
 
 const addJob = async () => {
-  const job: Job = await queue.add("sleepTask", {});
+  const job = await queue.add("sleepTask", {});
   console.log(`Added job ${job.id}`);
 };
 
@@ -32,7 +32,13 @@ const listJobs = async () => {
 };
 
 const stopJob = async (jobId: string) => {
-  console.log(`Publishing cancel for job ${jobId}`);
+  const job: Job = await queue.getJob(jobId);
+  const jobState = await job.getState();
+  if (jobState === 'completed' || jobState === 'failed') {
+    console.error(`Error: Job with id ${jobId} has state '${jobState}'.`)
+    return;
+  }
+  console.log(`Publishing cancel for job ${jobId} (current state: ${jobState})`);
   await redis.publish(getChannelIdKey(jobId), "abort");
 };
 
