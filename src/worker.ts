@@ -1,10 +1,22 @@
 import { Worker, Job } from "bullmq";
 import Docker, { Container } from "dockerode";
 import Redis from "ioredis";
-import { getChannelIdKey, QUEUE_NAME, REDIS_HOST } from './shared';
+import { getChannelIdKey, QUEUE_NAME, REDIS_HOST } from "./shared";
 
 const docker = new Docker();
 const sub = new Redis({ host: REDIS_HOST });
+
+type ContainerJobStatus =
+  | "CONTAINER_FINISH"
+  | "CONTAINER_FINISH_ERROR"
+  | "CONTAINER_CANCELLED"
+  | "CONTAINER_CANCELLED_ERROR";
+
+interface ContainerJobResult {
+  status: ContainerJobStatus;
+  data: unknown | null;
+  error: unknown | null;
+}
 
 const pullImage = (image: string): Promise<void> => {
   return new Promise((resolve, reject) => {
@@ -37,8 +49,8 @@ const startJobContainer = async (jobId: string): Promise<Container> => {
     await docker.getImage(image).inspect();
   } catch (error: unknown) {
     if (error instanceof Error) {
-      console.log(`Failed to inspect image ${image}: ${error.message}.`)
-      console.log(`Attempting to pull ${image}...`)
+      console.log(`Failed to inspect image ${image}: ${error.message}.`);
+      console.log(`Attempting to pull ${image}...`);
       await pullImage(image);
     } else {
       throw error;
@@ -58,7 +70,9 @@ const startJobContainer = async (jobId: string): Promise<Container> => {
           count=$((count + 1));
           sleep 1;
         done
-      `.trim().replace(/\s+/g, ' ')
+      `
+        .trim()
+        .replace(/\s+/g, " "),
     ],
     Tty: false,
   });
@@ -67,13 +81,14 @@ const startJobContainer = async (jobId: string): Promise<Container> => {
   return container;
 };
 
-const createCancelWatcher = (jobId: string): Promise<never> => {
+const createCancelWatcher = (jobId: string, container: Container): Promise<string> => {
   const channel = getChannelIdKey(jobId);
-  return new Promise((_, reject) => {
-    const handler = (msgChannel: string) => {
+  return new Promise((resolve, reject) => {
+    const handler = async (msgChannel: string) => {
       if (msgChannel === channel) {
+        await killContainer(container);
         sub.removeListener("message", handler);
-        reject(new Error(`Job ${jobId} cancelled via Redis PubSub`));
+        resolve(`Job ${jobId} cancelled via Redis PubSub`);
       }
     };
     sub.subscribe(channel).catch(reject);
@@ -81,20 +96,34 @@ const createCancelWatcher = (jobId: string): Promise<never> => {
   });
 };
 
-const finishOrKillJob = async  (jobId: string, container?: Container) => {
-  const channel = getChannelIdKey(jobId);
-  if (container) {
-    try {
-      await container.kill();
-    } catch (error) {
-      console.error(`Error: failed to kill container with id ${container.id}`, error)
-    }
-  }
-
+const killContainer = async (container: Container) => {
   try {
-    await sub.unsubscribe(channel);
-  } catch (err) {
-    console.warn(`Failed to unsubscribe (jobId=${jobId}, containerId?=${container?.id})`, err);
+    await container.kill();
+  } catch (error) {
+    console.error(
+      `Error: failed to kill container with id ${container.id}`,
+      error
+    );
+  }
+};
+
+const handleJobPromise = async (
+  promise: Promise<unknown>,
+  successStatus: ContainerJobStatus,
+  errorStatus: ContainerJobStatus
+): Promise<ContainerJobResult> => {
+  try {
+    return {
+      status: successStatus,
+      data: await promise,
+      error: null,
+    };
+  } catch (error: unknown) {
+    return {
+      status: errorStatus,
+      data: null,
+      error,
+    }
   }
 };
 
@@ -103,19 +132,53 @@ const handleJob = async (job: Job) => {
     throw new Error("ERROR: missing job.id");
   }
   const container = await startJobContainer(job.id);
-  const cancelWatcher = createCancelWatcher(job.id);
 
-  const logStream = await container.attach({ stream: true, stdout: true, stderr: true });
+  const logStream = await container.attach({
+    stream: true,
+    stdout: true,
+    stderr: true,
+  });
   logStream.on("data", (chunk) => {
     process.stdout.write(chunk.toString());
   });
 
+  const containerWait = handleJobPromise(
+    container.wait(),
+    "CONTAINER_FINISH",
+    "CONTAINER_FINISH_ERROR"
+  );
+  const cancelWatcher = handleJobPromise(
+    createCancelWatcher(job.id, container),
+    "CONTAINER_CANCELLED",
+    "CONTAINER_CANCELLED_ERROR"
+  );
+
+  const result = await Promise.race([containerWait, cancelWatcher]);
+  console.log({ result });
+
+  switch (result.status) {
+    case "CONTAINER_CANCELLED":
+      console.log(`[JobID=${job.id}] cancelled.`);
+      break;
+
+    case "CONTAINER_CANCELLED_ERROR":
+      console.warn(`[JobID=${job.id}] cancelled with errors:`, result.error);
+      break;
+
+    case "CONTAINER_FINISH":
+      console.log(`[JobID=${job.id}] finished.`);
+      break;
+
+    default:
+      console.warn(`[JobID=${job.id}] finished with errors:`, result.error);
+      break;
+  }
+
+  const channel = getChannelIdKey(job.id);
   try {
-    await Promise.race([container.wait(), cancelWatcher]);
+    await sub.unsubscribe(channel);
   } catch (err) {
-    throw err;
-  } finally {
-    await finishOrKillJob(job.id, container);
+    console.warn(`Failed to unsubscribe (jobId=${job.id})`, err);
   }
 };
 
