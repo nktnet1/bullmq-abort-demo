@@ -6,6 +6,9 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "lib": ["ES2020"],
     "outDir": "dist"
   },
   "include": ["src"]

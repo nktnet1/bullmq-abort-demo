@@ -27,7 +27,7 @@ or simple short polling.
     ```
 
 1. Pull the alpine image used for the "sleep" dummy process
-   
+
    ```sh
    docker pull alpine:3.14
    ```
@@ -39,13 +39,13 @@ or simple short polling.
    ```
 
 1. In a new terminal, start the worker container
-   
+
    ```
    pnpm start:worker
    ```
 
 1. In another (split) terminal, start the producer container
-   
+
    ```
    pnpm start:producer
    ```
