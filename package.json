@@ -8,14 +8,14 @@
     "start:worker": "tsx src/worker.ts"
   },
   "dependencies": {
-    "bullmq": "^5.56.9",
+    "bullmq": "^5.58.4",
     "dockerode": "^4.0.7",
     "dotenv": "^17.2.1"
   },
   "devDependencies": {
-    "@types/dockerode": "^3.3.42",
-    "tsx": "^4.20.3",
+    "@types/dockerode": "^3.3.43",
+    "tsx": "^4.20.5",
     "typescript": "^5.9.2"
   },
-  "packageManager": "pnpm@10.14.0"
+  "packageManager": "pnpm@10.15.0"
 }
