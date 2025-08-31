@@ -1,5 +1,5 @@
 import Redis from "ioredis";
-import { Job, Queue } from "bullmq";
+import { Queue } from "bullmq";
 import readline from "readline";
 import { getChannelIdKey, QUEUE_NAME, REDIS_HOST } from './shared';
 
@@ -32,7 +32,10 @@ const listJobs = async () => {
 };
 
 const stopJob = async (jobId: string) => {
-  const job: Job = await queue.getJob(jobId);
+  const job = await queue.getJob(jobId);
+  if (!job) {
+    throw new Error(`Cannot find job with id: ${jobId}`)
+  }
   const jobState = await job.getState();
   if (jobState === 'completed' || jobState === 'failed') {
     console.error(`Error: Job with id ${jobId} has state '${jobState}'.`)
