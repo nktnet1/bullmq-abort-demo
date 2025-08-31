@@ -109,6 +109,7 @@ const handleJob = async (job: Job) => {
 
 const worker = new Worker(QUEUE_NAME, handleJob, {
   connection: { host: REDIS_HOST },
+  concurrency: 50,
 });
 
 worker.on("failed", (job, err) => {
