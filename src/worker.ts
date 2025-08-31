@@ -18,6 +18,8 @@ interface ContainerJobResult {
   error: unknown | null;
 }
 
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 const pullImage = (image: string): Promise<void> => {
   return new Promise((resolve, reject) => {
     docker.pull(image, {}, (err, stream) => {
@@ -142,18 +144,20 @@ const handleJob = async (job: Job) => {
     process.stdout.write(chunk.toString());
   });
 
-  const containerWait = handleJobPromise(
-    container.wait(),
-    "CONTAINER_FINISH",
-    "CONTAINER_FINISH_ERROR"
-  );
   const cancelWatcher = handleJobPromise(
     createCancelWatcher(job.id, container),
     "CONTAINER_CANCELLED",
     "CONTAINER_CANCELLED_ERROR"
   );
+  const containerWait = handleJobPromise(
+    // Async sleep so that aborting/cancelling the container via pubsub will
+    // cause the cancelWatcher promise to resolve first before containerWait.
+    container.wait().then(() => sleep(0)),
+    "CONTAINER_FINISH",
+    "CONTAINER_FINISH_ERROR"
+  );
 
-  const result = await Promise.race([containerWait, cancelWatcher]);
+  const result = await Promise.race([cancelWatcher, containerWait]);
   console.log({ result });
 
   switch (result.status) {
