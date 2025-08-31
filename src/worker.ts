@@ -15,10 +15,16 @@ const pullImage = (image: string): Promise<void> => {
       if (!stream) {
         throw new Error("Missing stream");
       }
-      docker.modem.followProgress(stream, (err) => {
-        if (err) reject(err);
-        else resolve();
-      });
+      docker.modem.followProgress(
+        stream,
+        (err) => {
+          if (err) reject(err);
+          else resolve();
+        },
+        (event) => {
+          console.log(`\t[image=${image}] Pull event:`, event);
+        }
+      );
     });
   });
 };
@@ -29,8 +35,14 @@ const startJobContainer = async (jobId: string): Promise<Container> => {
 
   try {
     await docker.getImage(image).inspect();
-  } catch {
-    await pullImage(image);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.log(`Failed to inspect image ${image}: ${error.message}.`)
+      console.log(`Attempting to pull ${image}...`)
+      await pullImage(image);
+    } else {
+      throw error;
+    }
   }
 
   const container = await docker.createContainer({
