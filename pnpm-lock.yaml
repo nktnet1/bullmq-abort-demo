@@ -17,6 +17,9 @@ importers:
       dotenv:
         specifier: ^17.2.1
         version: 17.2.1
+      ioredis:
+        specifier: ^5.7.0
+        version: 5.7.0
     devDependencies:
       '@types/dockerode':
         specifier: ^3.3.43

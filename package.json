@@ -10,7 +10,8 @@
   "dependencies": {
     "bullmq": "5.26.0",
     "dockerode": "^4.0.7",
-    "dotenv": "^17.2.1"
+    "dotenv": "^17.2.1",
+    "ioredis": "^5.7.0"
   },
   "devDependencies": {
     "@types/dockerode": "^3.3.43",
