@@ -8,7 +8,7 @@
     "start:worker": "tsx src/worker.ts"
   },
   "dependencies": {
-    "bullmq": "^5.58.4",
+    "bullmq": "5.26.0",
     "dockerode": "^4.0.7",
     "dotenv": "^17.2.1"
   },
