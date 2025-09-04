@@ -8,9 +8,9 @@
     "start:worker": "tsx src/worker.ts"
   },
   "dependencies": {
-    "bullmq": "5.26.0",
+    "bullmq": "5.58.5",
     "dockerode": "^4.0.7",
-    "dotenv": "^17.2.1",
+    "dotenv": "^17.2.2",
     "ioredis": "^5.7.0"
   },
   "devDependencies": {
@@ -18,5 +18,5 @@
     "tsx": "^4.20.5",
     "typescript": "^5.9.2"
   },
-  "packageManager": "pnpm@10.15.0"
+  "packageManager": "pnpm@10.15.1"
 }

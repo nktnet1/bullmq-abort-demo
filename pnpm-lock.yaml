@@ -9,17 +9,22 @@ importers:
   .:
     dependencies:
       bullmq:
-        specifier: 5.26.0
-        version: 5.26.0
+        specifier: 5.58.5
+        version: 5.58.5
       dockerode:
         specifier: ^4.0.7
         version: 4.0.7
       dotenv:
+<<<<<<< HEAD
         specifier: ^17.2.1
         version: 17.2.1
       ioredis:
         specifier: ^5.7.0
         version: 5.7.0
+=======
+        specifier: ^17.2.2
+        version: 17.2.2
+>>>>>>> f88d349 (deps: bump package versions, including bullmq@5.58.5 for job types)
     devDependencies:
       '@types/dockerode':
         specifier: ^3.3.43
@@ -309,8 +314,8 @@ packages:
     resolution: {integrity: sha512-8f9ZJCUXyT1M35Jx7MkBgmBMo3oHTTBIPLiY9xyL0pl3T5RwcPEY8cUHr5LBNfu/fk6c2T4DJZuVM/8ZZT2D2A==}
     engines: {node: '>=10.0.0'}
 
-  bullmq@5.26.0:
-    resolution: {integrity: sha512-R9lEzN2Lac7yYM7ZHvtQN9UWMICskun7Jxk3WWz9koL5fd9dqT7Q5u5iABp6FqD+aHmlBfE8wDAkekMqq8jOLA==}
+  bullmq@5.58.5:
+    resolution: {integrity: sha512-0A6Qjxdn8j7aOcxfRZY798vO/aMuwvoZwfE6a9EOXHb1pzpBVAogsc/OfRWeUf+5wMBoYB5nthstnJo/zrQOeQ==}
 
   chownr@1.1.4:
     resolution: {integrity: sha512-jJ0bqzaylmJtVnNgzTeSOs8DPavpbYgEr/b0YL8/2GO3xJEhInFmhKMUnEJQjZumK7KXGFhUy89PrsJWlakBVg==}
@@ -363,8 +368,8 @@ packages:
     resolution: {integrity: sha512-R+rgrSRTRdU5mH14PZTCPZtW/zw3HDWNTS/1ZAQpL/5Upe/ye5K9WQkIysu4wBoiMwKynsz0a8qWuGsHgEvSAA==}
     engines: {node: '>= 8.0'}
 
-  dotenv@17.2.1:
-    resolution: {integrity: sha512-kQhDYKZecqnM0fCnzI5eIv5L4cAe/iRI+HqMbO/hbRdTAeXDG+M9FjipUxNfbARuEg4iHIbhnhs78BCHNbSxEQ==}
+  dotenv@17.2.2:
+    resolution: {integrity: sha512-Sf2LSQP+bOlhKWWyhFsn0UsfdK/kCWRv1iuA2gXAwt3dyNabr6QSj00I2V10pidqz69soatm9ZwZvpQMTIOd5Q==}
     engines: {node: '>=12'}
 
   emoji-regex@8.0.0:
@@ -762,7 +767,7 @@ snapshots:
   buildcheck@0.0.6:
     optional: true
 
-  bullmq@5.26.0:
+  bullmq@5.58.5:
     dependencies:
       cron-parser: 4.9.0
       ioredis: 5.7.0
@@ -830,7 +835,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  dotenv@17.2.1: {}
+  dotenv@17.2.2: {}
 
   emoji-regex@8.0.0: {}
 
